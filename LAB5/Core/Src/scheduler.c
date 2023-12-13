@@ -7,6 +7,7 @@
 
 #include "scheduler.h"
 #include "main.h"
+#include "global.h"
 
 struct sTask{
 	void(*pTask)();
@@ -39,30 +40,23 @@ void SCH_Dispatch_Tasks(){
 		--head->Run;
 
 		if(head->Run == 0){
-
-//			struct sTask* temp = head;//, *nextHead = head->next;
-//
-////			if(head->Period > 0) head->Delay = head->Period;
-//
-//			if(temp->Period > 0) SCH_Add_Task(temp->pTask, temp->Period, temp->Period);
-//
-//			SCH_Delete_Task(temp->taskId);
+//			char str[20];
+//			uint8_t len = sprintf(str, "!ADC=%u#\n", (unsigned int) head->taskId);
+//			HAL_UART_Transmit(&huart2, (void*) str, len, 100);
 			if(head->Period > 0) SCH_Add_Task(head->pTask, head->Period, head->Period);
 
-			SCH_Delete_Task(head->taskId);
-//			if(head->Period == 100) HAL_GPIO_TogglePin(GPIOB, normal_Pin);
-//			else HAL_GPIO_TogglePin(GPIOB, head_Pin);
-
-			//		head = nextHead;
+			SCH_Delete_Task(head->pTask);
+//			len = sprintf(str, "!ADC=%u#\n", (unsigned int) head->taskId);
+//			HAL_UART_Transmit(&huart2, (void*) str, len, 100);
 		}
 	}
 }
 
-uint8_t SCH_Delete_Task(uint32_t taskId){
+uint8_t SCH_Delete_Task(void (*pTask)()){
 	if(!head) return 16;
 
 	struct sTask* cur = head, *pre = head;
-	while(cur && cur->taskId != taskId){
+	while(cur && cur->pTask != pTask){
 		pre = cur;
 		cur = cur->next;
 	}
@@ -71,25 +65,25 @@ uint8_t SCH_Delete_Task(uint32_t taskId){
 
 	pre->next = cur->next;
 
-	if(taskId == 0) head = pre->next;
+	if(cur == head) head = pre->next;
 
 	if(!cur->next) {
 		free(cur);
-		return taskId;
+		return pre->taskId;
 	}
 
 	pre->next->Delay += cur->Delay;
 
-	pre = pre->next;
+//	pre = pre->next;
 
-	while(pre){
-		--pre->taskId;
-		pre = pre->next;
-	}
+//	while(pre){
+//		--pre->taskId;
+//		pre = pre->next;
+//	}
 
 	free(cur);
 
-	return taskId;
+	return pre->taskId;
 }
 
 uint32_t SCH_Add_Task(void (*pFunc)(), uint32_t Delay, uint32_t Period){
@@ -118,12 +112,9 @@ uint32_t SCH_Add_Task(void (*pFunc)(), uint32_t Delay, uint32_t Period){
 			temp->next = cur;
 
 			temp->taskId = pre->taskId + 1;
-//			if(cur) cur->taskId = temp->taskId + 1;
 		}
 		else{
 			temp->next = cur;
-//			temp->taskId = 0;
-//			HAL_GPIO_TogglePin(GPIOB, head_Pin);
 			head = temp;
 		}
 

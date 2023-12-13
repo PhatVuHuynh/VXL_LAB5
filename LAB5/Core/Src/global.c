@@ -8,11 +8,7 @@
 
 uint8_t temp = 0;
 
-uint8_t cmd[10];
-
-extern ADC_HandleTypeDef hadc1;
-
-extern UART_HandleTypeDef huart2;
+static uint8_t cmd[10];
 
 static struct{
 	uint8_t buffer [ MAX_BUFFER_SIZE ];
@@ -24,6 +20,7 @@ static struct{
 
 uint8_t checkCmd(){
 	if(temp != '#') return 0;
+
 	uint8_t end = ringBuff.head;
 	while(ringBuff.buffer[end] != '#') {
 		++end;
@@ -34,23 +31,26 @@ uint8_t checkCmd(){
 	uint8_t start = end;
 
 	while(ringBuff.buffer[start] != '!') {
-			--start;
-			if(start < 0) start = MAX_BUFFER_SIZE - 1;
-			if(start == end) return 0;
-		}
+		--start;
+		if(start < 0) start = MAX_BUFFER_SIZE - 1;
+		if(start == end) return 0;
+	}
 
 	uint8_t size = 0;
 	if(start <= end){
-		size = end - start;
+		size = end - start + 1;
 		memcpy(cmd, ringBuff.buffer + start, size);
-		cmd[size] = '\0';
 	}
 	else{
 		size = MAX_BUFFER_SIZE - start;
 		memcpy(cmd, ringBuff.buffer+ start, size);
-		memcpy(cmd, ringBuff.buffer, end);
-		cmd[size + end] = '\0';
+		memcpy(cmd, ringBuff.buffer, end + 1);
+		size += end;
 	}
+	cmd[size] = '\0';
+
+	ringBuff.head = (ringBuff.tail + 1) % MAX_BUFFER_SIZE;
+	ringBuff.tail = ringBuff.head;
 
 	return 1;
 }
@@ -91,5 +91,5 @@ void resetFlag(){
 }
 
 uint8_t* getCmd(){
-	return ringBuff.buffer;
+	return cmd;
 }

@@ -1,4 +1,4 @@
-global.c:25:9:checkCmd	16	static
+global.c:21:9:checkCmd	16	static
 global.c:58:6:addBuffer	4	static
 global.c:63:6:resetBuffer	4	static
 global.c:68:9:isFull	4	static

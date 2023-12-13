@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 //#include "input_reading.h"
 #include "scheduler.h"
+#include "fsm.h"
 #include <stdio.h>
 //#include "button.h"
 #include "global.h"
@@ -95,8 +96,13 @@ static void MX_ADC1_Init(void);
 //	HAL_GPIO_WritePin(GPIOA, LED_2_5S_ONESHOT_Pin, 0);
 //}
 
-void led(){
-	HAL_GPIO_TogglePin(GPIOA, LED_Pin);
+void fsm(){
+	if(isFlag()){
+		HAL_GPIO_TogglePin(GPIOA, LED_Pin);
+		command_parsel_fsm();
+		resetFlag();
+	}
+	uart_communiation_fsm();
 }
 
 /* USER CODE END 0 */
@@ -138,48 +144,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//  HAL_GPIO_WritePin(GPIOA, LED_1S_Pin, 1);
-//  HAL_GPIO_WritePin(GPIOA, LED_1_5S_Pin, 1);
-//  HAL_GPIO_WritePin(GPIOA, LED_2S_Pin, 1);
-//  HAL_GPIO_WritePin(GPIOA, LED_2_5S_ONESHOT_Pin, 1);
-//  HAL_GPIO_WritePin(GPIOA, LED_BUTTON_Pin, 1);
-//  HAL_GPIO_WritePin(GPIOB, normal_Pin, 1); // PIN FOR LED 0.5S
-////  HAL_GPIO_WritePin(GPIOB, head_Pin, 1);
-//
-//
-//  SCH_Add_Task(button, 0, 3);
-//  SCH_Add_Task(led0_5s, 0.5 * SEC_TO_MILISEC / TICK, 0.5 * SEC_TO_MILISEC / TICK);
-//  SCH_Add_Task(led1s, 1 * SEC_TO_MILISEC / TICK, 1 * SEC_TO_MILISEC / TICK);
-//  SCH_Add_Task(led1_5s, 1.5 * SEC_TO_MILISEC / TICK, 1.5 * SEC_TO_MILISEC / TICK);
-//  SCH_Add_Task(led2s, 2 * SEC_TO_MILISEC / TICK, 2 * SEC_TO_MILISEC / TICK);
-//  SCH_Add_Task(led2_5s, 2.5 * SEC_TO_MILISEC / TICK, 0);
-
-  SCH_Add_Task(led, 0, 0.5 * SEC_TO_MILISEC / TICK);
   HAL_UART_Receive_IT(&huart2, &temp, 1);
+  HAL_GPIO_WritePin(GPIOA, LED_Pin, 1);
 
-//  char str[20];
-//  uint32_t ADC_val = 0;
-//  uint32_t pre_val = 0;
-  setTimer(500);
+  SCH_Add_Task(command_parsel_fsm, 0, 10);
+  SCH_Add_Task(uart_communiation_fsm, 0, 12);
   while (1){
 	  SCH_Dispatch_Tasks();
-
-	  if(isFlag()){
-		  command_parsel_fsm();
-		  resetFlag();
-	  }
-	  uart_communiation_fsm();
-
-//	  led();
-//	  ADC_val = HAL_ADC_GetValue(&hadc1);
-//	  pre_val = ADC_val;
-//		ADC_val = HAL_ADC_GetValue(&hadc1);
-//	if (pre_val != ADC_val)
-//	  HAL_UART_Transmit(&huart2, (void*)str, sprintf(str, "%d\n", (int)ADC_val), 10);
-//	  if(timer_flag){
-//		  setTimer(500);
-//	  }
-//	  HAL_Delay(500);
 
     /* USER CODE END WHILE */
 
@@ -364,9 +335,13 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, checkcmd_Pin|macro_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
@@ -374,6 +349,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : checkcmd_Pin macro_Pin */
+  GPIO_InitStruct.Pin = checkcmd_Pin|macro_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

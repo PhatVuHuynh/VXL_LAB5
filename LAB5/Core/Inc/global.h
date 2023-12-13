@@ -17,7 +17,10 @@
 #define TICK 10 //call back
 #define SEC_TO_MILISEC 1000
 
-extern uint8_t cmd[10];
+extern ADC_HandleTypeDef hadc1;
+
+extern UART_HandleTypeDef huart2;
+
 extern uint8_t temp;
 
 void addBuffer();

@@ -10,12 +10,13 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include "global.h"
 
 void SCH_Update();
 
 void SCH_Dispatch_Tasks();
 
-uint8_t SCH_Delete_Task(uint32_t taskId);
+uint8_t SCH_Delete_Task(void (*pTask)());
 
 uint32_t SCH_Add_Task(void(*pFunc)(), uint32_t Delay, uint32_t Period);
 
